@@ -25,3 +25,17 @@ impl Pallet {
 		*self.balances.get(who).unwrap_or(&0)
 	}
 }
+
+mod tests {
+    use crate::balances::Pallet;
+
+	#[test]
+    fn init_balances() {
+        let mut b = Pallet::new();
+        
+        assert_eq!(b.balance(&"alice".to_string()), 0);
+        b.set_balance(&"alice".to_string(), 100);
+        assert_eq!(b.balance(&"alice".to_string()), 100);
+        assert_eq!(b.balance(&"bob".to_string()), 0);
+    }
+}
