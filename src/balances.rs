@@ -24,8 +24,32 @@ impl Pallet {
 	pub fn balance(&self, who: &String) -> u128 {
 		*self.balances.get(who).unwrap_or(&0)
 	}
+
+    /// Transfer `amount` from one account to another.
+	/// This function verifies that `from` has at least `amount` balance to transfer,
+	/// and that no mathematical overflows occur.
+	pub fn transfer(
+		&mut self,
+		caller: String,
+		to: String,
+		amount: u128,
+	) -> Result<(), &'static str> {
+        let new_from_b = self.
+            balance(&caller).
+            checked_sub(amount).
+            ok_or("Not enough funds.")?;
+        let new_to_b = self.
+            balance(&to).
+            checked_add(amount).
+            ok_or("Maximum amount of funds reached")?;
+        
+        self.set_balance(&caller, new_from_b);
+        self.set_balance(&to, new_to_b);
+		Ok(())
+	}
 }
 
+#[cfg(test)]
 mod tests {
     use crate::balances::Pallet;
 
@@ -38,4 +62,24 @@ mod tests {
         assert_eq!(b.balance(&"alice".to_string()), 100);
         assert_eq!(b.balance(&"bob".to_string()), 0);
     }
+
+    #[test]
+	fn transfer_balance() {
+		let mut balances = super::Pallet::new();
+
+		assert_eq!(
+			balances.transfer("alice".to_string(), "bob".to_string(), 51),
+			Err("Not enough funds.")
+		);
+
+		balances.set_balance(&"alice".to_string(), 100);
+		assert_eq!(balances.transfer("alice".to_string(), "bob".to_string(), 51), Ok(()));
+		assert_eq!(balances.balance(&"alice".to_string()), 49);
+		assert_eq!(balances.balance(&"bob".to_string()), 51);
+
+		assert_eq!(
+			balances.transfer("alice".to_string(), "bob".to_string(), 51),
+			Err("Not enough funds.")
+		);
+	}
 }
