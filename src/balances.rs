@@ -1,18 +1,20 @@
 use std::collections::BTreeMap;
-
-type AccountID = String;
-type Balance = u128;
+use num::traits::{CheckedAdd, CheckedSub, Zero};
 
 /// This is the Balances Module.
 /// It is a simple module which keeps track of how much balance each account has in this state
 /// machine.
 #[derive(Debug)]
-pub struct Pallet {
-    // A simple storage mapping from accounts (`String`) to their balances (`u128`).
+pub struct Pallet<AccountID, Balance> {
+    // A simple storage mapping from accounts (`AccountID`) to their balances (`Balance`).
 	balances: BTreeMap<AccountID, Balance>,
 }
 
-impl Pallet {
+impl<AccountID, Balance> Pallet<AccountID, Balance>
+where
+	AccountID: Ord + Clone,
+	Balance: CheckedAdd + CheckedSub + Copy + Zero
+{
     /// Create a new instance of the balances module.
 	pub fn new() -> Self {
 		Self { balances: BTreeMap::new() }
@@ -20,13 +22,13 @@ impl Pallet {
 
 	/// Set the balance of an account `who` to some `amount`.
 	pub fn set_balance(&mut self, who: &AccountID, amount: Balance) {
-		self.balances.insert(who.to_string(), amount);
+		self.balances.insert(who.clone(), amount);
 	}
 
 	/// Get the balance of an account `who`.
 	/// If the account has no stored balance, we return zero.
 	pub fn balance(&self, who: &AccountID) -> Balance {
-		*self.balances.get(who).unwrap_or(&0)
+		*self.balances.get(who).unwrap_or(&Balance::zero())
 	}
 
     /// Transfer `amount` from one account to another.
@@ -40,11 +42,11 @@ impl Pallet {
 	) -> Result<(), &'static str> {
         let new_from_b = self.
             balance(&caller).
-            checked_sub(amount).
+            checked_sub(&amount).
             ok_or("Not enough funds.")?;
         let new_to_b = self.
             balance(&to).
-            checked_add(amount).
+            checked_add(&amount).
             ok_or("Maximum amount of funds reached")?;
         
         self.set_balance(&caller, new_from_b);
@@ -59,7 +61,7 @@ mod tests {
 
 	#[test]
     fn init_balances() {
-        let mut b = Pallet::new();
+        let mut b = Pallet::<String, u128>::new();
         
         assert_eq!(b.balance(&"alice".to_string()), 0);
         b.set_balance(&"alice".to_string(), 100);
@@ -69,7 +71,7 @@ mod tests {
 
     #[test]
 	fn transfer_balance() {
-		let mut balances = super::Pallet::new();
+		let mut balances = Pallet::<String, u128>::new();
 
 		assert_eq!(
 			balances.transfer("alice".to_string(), "bob".to_string(), 51),

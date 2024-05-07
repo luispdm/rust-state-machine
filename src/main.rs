@@ -1,12 +1,17 @@
 mod balances;
 mod system;
 
+mod types {
+    pub type AccountID = String;
+    pub type Balance = u128;
+}
+
 // This is our main Runtime.
 // It accumulates all of the different pallets we want to use.
 #[derive(Debug)]
 pub struct Runtime {
 	sys: system::Pallet,
-    bal: balances::Pallet,
+    bal: balances::Pallet<types::AccountID, types::Balance>,
 }
 
 impl Runtime {
