@@ -3,6 +3,7 @@ mod system;
 
 // This is our main Runtime.
 // It accumulates all of the different pallets we want to use.
+#[derive(Debug)]
 pub struct Runtime {
 	sys: system::Pallet,
     bal: balances::Pallet,
@@ -39,10 +40,13 @@ fn main() {
     assert!(res.is_ok());
 
 	// second transaction
+    r.sys.inc_block_number();
 	r.sys.inc_nonce(alice);
     let res = r
         .bal
         .transfer(alice.to_string(), charlie.to_string(), 30)
         .map_err(|e| eprintln!("{}", e));
     assert!(res.is_ok());
+
+    println!("{:#?}", r);
 }
