@@ -4,10 +4,6 @@ mod system;
 
 use support::Dispatch;
 
-// These are all the calls which are exposed to the world.
-// Note that it is just an accumulation of the calls exposed by each module.
-pub enum RuntimeCall {}
-
 // These are the concrete types we will use in our simple state machine.
 // Modules are configured for these types directly, and they satisfy all of our
 // trait requirements.
@@ -19,6 +15,15 @@ mod types {
     pub type Extrinsic = crate::support::Extrinsic<AccountId, crate::RuntimeCall>;
     pub type Header = crate::support::Header<BlockNumber>;
     pub type Block = crate::support::Block<Header, Extrinsic>;
+}
+
+// These are all the calls which are exposed to the world.
+// Note that it is just an accumulation of the calls exposed by each module.
+pub enum RuntimeCall {
+    BalancesTransfer {
+        to: types::AccountId,
+        amount: types::Balance,
+    },
 }
 
 // This is our main Runtime.
@@ -81,7 +86,12 @@ impl crate::support::Dispatch for Runtime {
         caller: Self::Caller,
         runtime_call: Self::Call,
     ) -> support::DispatchResult {
-        unimplemented!();
+        match runtime_call {
+            RuntimeCall::BalancesTransfer { to, amount } => {
+                self.bal.transfer(caller, to, amount)?;
+            }
+        }
+        Ok(())
     }
 }
 
