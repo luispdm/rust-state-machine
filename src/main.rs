@@ -1,5 +1,6 @@
 mod balances;
 mod system;
+mod support;
 
 // This is our main Runtime.
 // It accumulates all of the different pallets we want to use.
