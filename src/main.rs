@@ -97,32 +97,33 @@ impl crate::support::Dispatch for Runtime {
 
 fn main() {
     // initialize runtime
-    let alice = &"alice".to_string();
-    let bob = &"bob".to_string();
-    let charlie = &"charlie".to_string();
+    let alice = "alice".to_string();
+    let bob = "bob".to_string();
+    let charlie = "charlie".to_string();
     let mut r = Runtime::new();
-    r.bal.set_balance(alice, 100);
+    r.bal.set_balance(&alice, 100);
 
-    // start emulating a block
-    r.sys.inc_block_number();
-    assert_eq!(r.sys.block_number(), 1);
-
-    // first transaction
-    r.sys.inc_nonce(alice);
-    let res = r
-        .bal
-        .transfer(alice.to_string(), bob.to_string(), 30)
-        .map_err(|e| eprintln!("{}", e));
-    assert!(res.is_ok());
-
-    // second transaction
-    r.sys.inc_block_number();
-    r.sys.inc_nonce(alice);
-    let res = r
-        .bal
-        .transfer(alice.to_string(), charlie.to_string(), 30)
-        .map_err(|e| eprintln!("{}", e));
-    assert!(res.is_ok());
+    // execute two transactions in one block
+    let block_1 = types::Block {
+        header: support::Header { block_number: 1 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::BalancesTransfer {
+                    to: bob,
+                    amount: 69,
+                },
+            },
+            support::Extrinsic {
+                caller: alice,
+                call: RuntimeCall::BalancesTransfer {
+                    to: charlie,
+                    amount: 31,
+                },
+            },
+        ],
+    };
+    r.execute_block(block_1).expect("invalid block");
 
     println!("{:#?}", r);
 }
