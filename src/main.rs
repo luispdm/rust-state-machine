@@ -13,6 +13,7 @@ mod types {
     pub type Balance = u128;
     pub type BlockNumber = u32;
     pub type Nonce = u32;
+    pub type Content = &'static str;
     pub type Extrinsic = crate::support::Extrinsic<AccountId, crate::RuntimeCall>;
     pub type Header = crate::support::Header<BlockNumber>;
     pub type Block = crate::support::Block<Header, Extrinsic>;
@@ -22,6 +23,7 @@ mod types {
 // Note that it is just an accumulation of the calls exposed by each module.
 pub enum RuntimeCall {
     Balances(balances::Call<Runtime>),
+    ProofOfExistence(proof_of_existence::Call<Runtime>),
 }
 
 // This is our main Runtime.
@@ -30,16 +32,21 @@ pub enum RuntimeCall {
 pub struct Runtime {
     sys: system::Pallet<Self>,
     bal: balances::Pallet<Self>,
+    poe: proof_of_existence::Pallet<Self>,
 }
 
 impl system::Config for Runtime {
-    type AccountID = String;
-    type BlockNumber = u32;
-    type Nonce = u32;
+    type AccountID = types::AccountId;
+    type BlockNumber = types::BlockNumber;
+    type Nonce = types::Nonce;
 }
 
 impl balances::Config for Runtime {
-    type Balance = u128;
+    type Balance = types::Balance;
+}
+
+impl proof_of_existence::Config for Runtime {
+    type Content = types::Content;
 }
 
 impl Runtime {
@@ -48,6 +55,7 @@ impl Runtime {
         Self {
             sys: system::Pallet::new(),
             bal: balances::Pallet::new(),
+            poe: proof_of_existence::Pallet::new(),
         }
     }
 
@@ -87,6 +95,9 @@ impl crate::support::Dispatch for Runtime {
         match runtime_call {
             RuntimeCall::Balances(call) => {
                 self.bal.dispatch(caller, call)?;
+            },
+            RuntimeCall::ProofOfExistence(call) => {
+                self.poe.dispatch(caller, call)?;
             }
         }
         Ok(())
