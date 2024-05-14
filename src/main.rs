@@ -119,12 +119,12 @@ fn main() {
             support::Extrinsic {
                 caller: alice.clone(),
                 call: RuntimeCall::Balances(balances::Call::Transfer {
-                    to: bob,
+                    to: bob.clone(),
                     amount: 69,
                 }),
             },
             support::Extrinsic {
-                caller: alice,
+                caller: alice.clone(),
                 call: RuntimeCall::Balances(balances::Call::Transfer {
                     to: charlie,
                     amount: 31,
@@ -132,7 +132,60 @@ fn main() {
             },
         ],
     };
+
+    let block_2 = types::Block {
+        header: support::Header { block_number: 2 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::RevokeClaim {
+                    claim: "hi, bob"
+                })
+            },
+        ]
+    };
+
+    let block_3 = types::Block {
+        header: support::Header { block_number: 3 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
+                    claim: "hi, bob"
+                })
+            },
+        ]
+    };
+
+    let block_4 = types::Block {
+        header: support::Header { block_number: 4 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: bob.clone(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::RevokeClaim {
+                    claim: "hi, bob"
+                })
+            },
+        ]
+    };
+
+    let block_5 = types::Block {
+        header: support::Header { block_number: 5 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
+                    claim: "hi, bob"
+                })
+            },
+        ]
+    };
+
     r.execute_block(block_1).expect("invalid block");
+    r.execute_block(block_2).expect("invalid block");
+    r.execute_block(block_3).expect("invalid block");
+    r.execute_block(block_4).expect("invalid block");
+    r.execute_block(block_5).expect("invalid block");
 
     println!("{:#?}", r);
 }
