@@ -13,7 +13,7 @@ pub trait Config: crate::system::Config {
 #[derive(Debug)]
 pub struct Pallet<T:Config> {
     // A simple storage mapping from accounts (`AccountID`) to their balances (`Balance`).
-	balances: BTreeMap<T::AccountID, T::Balance>,
+	balances: BTreeMap<T::AccountId, T::Balance>,
 }
 
 impl<T:Config> Pallet<T>
@@ -24,23 +24,27 @@ impl<T:Config> Pallet<T>
 	}
 
 	/// Set the balance of an account `who` to some `amount`.
-	pub fn set_balance(&mut self, who: &T::AccountID, amount: T::Balance) {
+	pub fn set_balance(&mut self, who: &T::AccountId, amount: T::Balance) {
 		self.balances.insert(who.clone(), amount);
 	}
 
 	/// Get the balance of an account `who`.
 	/// If the account has no stored balance, we return zero.
-	pub fn balance(&self, who: &T::AccountID) -> T::Balance {
+	pub fn balance(&self, who: &T::AccountId) -> T::Balance {
 		*self.balances.get(who).unwrap_or(&T::Balance::zero())
 	}
+}
 
+#[macros::call]
+impl<T:Config> Pallet<T>
+{
     /// Transfer `amount` from one account to another.
 	/// This function verifies that `from` has at least `amount` balance to transfer,
 	/// and that no mathematical overflows occur.
 	pub fn transfer(
 		&mut self,
-		caller: T::AccountID,
-		to: T::AccountID,
+		caller: T::AccountId,
+		to: T::AccountId,
 		amount: T::Balance,
 	) -> DispatchResult {
         let new_from_b = self.
@@ -58,36 +62,6 @@ impl<T:Config> Pallet<T>
 	}
 }
 
-// A public enum which describes the calls we want to expose to the dispatcher.
-// We should expect that the caller of each call will be provided by the dispatcher,
-// and not included as a parameter of the call.
-pub enum Call<T: Config> {
-	Transfer {
-		to: T::AccountID,
-		amount: T::Balance,
-	}
-}
-
-/// Implementation of the dispatch logic, mapping from `BalancesCall` to the appropriate underlying
-/// function we want to execute.
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-	type Caller = T::AccountID;
-	type Call = Call<T>;
-
-	fn dispatch(
-		&mut self,
-		caller: Self::Caller,
-		call: Self::Call,
-	) -> crate::support::DispatchResult {
-		match call {
-			Call::Transfer { to, amount } => {
-				self.transfer(caller, to, amount)?;
-			}
-		}
-		Ok(())
-	}
-}
-
 #[cfg(test)]
 mod tests {
     use crate::balances::{Pallet, Config};
@@ -98,7 +72,7 @@ mod tests {
         type Balance = u128;
     }
     impl system::Config for TestConfig {
-        type AccountID = String;
+        type AccountId = String;
         type BlockNumber = u32;
 		type Nonce = u32;
     }

@@ -36,7 +36,7 @@ pub struct Runtime {
 }
 
 impl system::Config for Runtime {
-    type AccountID = types::AccountId;
+    type AccountId = types::AccountId;
     type BlockNumber = types::BlockNumber;
     type Nonce = types::Nonce;
 }
@@ -80,7 +80,7 @@ impl Runtime {
 }
 
 impl crate::support::Dispatch for Runtime {
-    type Caller = <Runtime as system::Config>::AccountID;
+    type Caller = <Runtime as system::Config>::AccountId;
     type Call = RuntimeCall;
     // Dispatch a call on behalf of a caller. Increments the caller's nonce.
     //
@@ -118,14 +118,14 @@ fn main() {
         extrinsics: vec![
             support::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::Balances(balances::Call::Transfer {
+                call: RuntimeCall::Balances(balances::Call::transfer {
                     to: bob.clone(),
                     amount: 69,
                 }),
             },
             support::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::Balances(balances::Call::Transfer {
+                call: RuntimeCall::Balances(balances::Call::transfer {
                     to: charlie,
                     amount: 31,
                 }),

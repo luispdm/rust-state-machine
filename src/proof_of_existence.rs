@@ -15,7 +15,7 @@ pub trait Config: crate::system::Config {
 pub struct Pallet<T: Config> {
     /// A simple storage map from content to the owner of that content.
     /// Accounts can make multiple different claims, but each claim can only have one owner.
-    claims: BTreeMap<T::Content, T::AccountID>,
+    claims: BTreeMap<T::Content, T::AccountId>,
 }
 
 impl<T: Config> Pallet<T> {
@@ -27,13 +27,13 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Get the owner (if any) of a claim.
-    pub fn get_claim(&self, claim: &T::Content) -> Option<&T::AccountID> {
+    pub fn get_claim(&self, claim: &T::Content) -> Option<&T::AccountId> {
         self.claims.get(claim)
     }
 
     /// Create a new claim on behalf of the `caller`.
     /// This function will return an error if someone already has claimed that content.
-    pub fn create_claim(&mut self, caller: T::AccountID, claim: T::Content) -> DispatchResult {
+    pub fn create_claim(&mut self, caller: T::AccountId, claim: T::Content) -> DispatchResult {
         if self.get_claim(&claim).is_some() {
             return Err("this content has already been claimed");
         }
@@ -44,7 +44,7 @@ impl<T: Config> Pallet<T> {
     /// Revoke an existing claim on some content.
     /// This function should only succeed if the caller is the owner of an existing claim.
     /// It will return an error if the claim does not exist, or if the caller is not the owner.
-    pub fn revoke_claim(&mut self, caller: T::AccountID, claim: T::Content) -> DispatchResult {
+    pub fn revoke_claim(&mut self, caller: T::AccountId, claim: T::Content) -> DispatchResult {
         let owner = self.get_claim(&claim).ok_or("claim does not exist")?;
         if *owner != caller {
             return Err("claim does not belong to caller");
@@ -65,7 +65,7 @@ pub enum Call<T: Config> {
 /// Implementation of the dispatch logic, mapping from `POECall` to the appropriate underlying
 /// function we want to execute.
 impl<T: Config> crate::support::Dispatch for Pallet<T> {
-    type Caller = T::AccountID;
+    type Caller = T::AccountId;
     type Call = Call<T>;
 
     fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchResult {
@@ -92,7 +92,7 @@ mod test {
     }
 
     impl crate::system::Config for TestConfig {
-        type AccountID = &'static str;
+        type AccountId = &'static str;
         type BlockNumber = u32;
         type Nonce = u32;
     }
